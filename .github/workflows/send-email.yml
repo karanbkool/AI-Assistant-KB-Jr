@@ -1,0 +1,48 @@
+name: Send Email
+
+on:
+  workflow_dispatch:
+    inputs:
+      to:
+        description: "Recipient address"
+        required: false
+        default: "karanbb29@icloud.com"
+      subject:
+        description: "Subject line"
+        required: false
+        default: "Message from test-assistant"
+      body:
+        description: "Message body"
+        required: false
+        default: "hi this is Karan Jr"
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send via Gmail SMTP
+        env:
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          TO: ${{ inputs.to }}
+          SUBJECT: ${{ inputs.subject }}
+          BODY: ${{ inputs.body }}
+        run: |
+          python3 - <<'PY'
+          import os, smtplib
+          from email.message import EmailMessage
+
+          sender = os.environ["GMAIL_ADDRESS"]
+          msg = EmailMessage()
+          msg["From"] = sender
+          msg["To"] = os.environ["TO"]
+          msg["Subject"] = os.environ["SUBJECT"]
+          msg.set_content(os.environ["BODY"])
+
+          with smtplib.SMTP("smtp.gmail.com", 587, timeout=30) as smtp:
+              smtp.starttls()
+              smtp.login(sender, os.environ["GMAIL_APP_PASSWORD"])
+              smtp.send_message(msg)
+
+          print(f"Sent to {msg['To']}")
+          PY
